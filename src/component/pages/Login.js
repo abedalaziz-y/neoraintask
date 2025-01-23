@@ -8,10 +8,8 @@ import { Input } from 'antd';
 import { EyeInvisibleOutlined, EyeTwoTone, GoogleOutlined, SyncOutlined } from '@ant-design/icons';
 import logo from '../../images/nlogo.png';
 import './login.css';
-import ReCAPTCHA from 'react-google-recaptcha';
-const Login = () => {
-    const [recaptchaToken, setRecaptchaToken] = useState(null); // <-- Define the recaptchaToken state
 
+const Login = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
@@ -32,19 +30,12 @@ const Login = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-
-        if (!recaptchaToken) {
-            toast.error('Please complete the reCAPTCHA.');
-            return;
-        }
-
         setLoading(true);
         try {
             const result = await auth.signInWithEmailAndPassword(email, password);
             const { user } = result;
             const idTokenResult = await user.getIdTokenResult();
-
-            LOGIN(idTokenResult.token,recaptchaToken)
+            LOGIN(idTokenResult.token)
                 .then((res) => {
                     dispatch({
                         type: 'LOGED_IN_USER',
@@ -62,14 +53,10 @@ const Login = () => {
                 });
         } catch (error) {
             toast.error(error.message);
-        } finally {
             setLoading(false);
         }
     };
 
-    const onRecaptchaChange = (token) => {
-        setRecaptchaToken(token); // Set the reCAPTCHA token when the user completes the challenge
-    };
     const googleLogin = async () => {
         auth.signInWithPopup(googleAuthProvider)
             .then(async (result) => {
@@ -105,8 +92,8 @@ const Login = () => {
    
 
 <div className="login-form">
-<img src={logo} alt="Logo" className="login-logo" /> 
-<h1 className="login- text-white">Neorain Team</h1>
+<img src={logo} alt="Logo" className="login-logo" />
+<h1 className="login- text-white">Welcome Back</h1>
 <form onSubmit={handleSubmit}>
     <div className="form-group">
         <Input
@@ -128,12 +115,6 @@ const Login = () => {
             iconRender={(visible) => (visible ? <EyeTwoTone /> : <EyeInvisibleOutlined />)}
         />
     </div>
-    <div className="d-flex justify-content-center mb-3">
-                                {/* <ReCAPTCHA
-                                    sitekey={'6LfaH8AqAAAAACBh-DPinp-spwYYriQUB74GXGmd'} // Your reCAPTCHA Site Key
-                                    onChange={onRecaptchaChange} // Callback when the user completes reCAPTCHA
-                                /> */}
-                            </div>
     <button type="submit" className="btn btn-danger mb-3" disabled={loading || !email || password.length < 6}>
         {loading ? <SyncOutlined spin /> : 'Login'}
     </button>
