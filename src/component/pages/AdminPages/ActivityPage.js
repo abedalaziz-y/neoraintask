@@ -21,7 +21,7 @@ const ActivityPage = () => {
   const { user } = useSelector((state) => state);
 
   useEffect(() => {
-    const socket = io('http://localhost:5000'); 
+    const socket = io('https://user-analytics-system-825467496328.us-central1.run.app'); 
 
     socket.on('newActivityrecord', (activity) => {
       setActivities((prevActivities) => {
@@ -162,7 +162,7 @@ const ActivityPage = () => {
 
   return (
     <div>
-      <h1 className="text-center text-danger">User Activities</h1>
+      <h1 className="text-center text-danger">Users Activities</h1>
       <div style={{ marginBottom: 16 }}>
         <Button onClick={handleMostActiveUserFilter} disabled={!mostActiveUser}>
           Filter Most Active User
