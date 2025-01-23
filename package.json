@@ -1,6 +1,6 @@
 {
   "name": "Neorain",
-"homepage": "https://user-analytics-system-448210.web.app",
+  "homepage": "",
   "version": "0.1.0",
   "dependencies": {
     "@emotion/react": "^11.9.3",
