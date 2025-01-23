@@ -130,7 +130,7 @@ const Login = () => {
     </div>
     <div className="d-flex justify-content-center mb-3">
                                 <ReCAPTCHA
-                                    sitekey={process.env.REACT_APP_RECAPTCHA_SITE_KEY} // Your reCAPTCHA Site Key
+                                    sitekey={'6LfaH8AqAAAAACBh-DPinp-spwYYriQUB74GXGmd'} // Your reCAPTCHA Site Key
                                     onChange={onRecaptchaChange} // Callback when the user completes reCAPTCHA
                                 />
                             </div>
