@@ -52,7 +52,7 @@ const Login = () => {
                     toast.error(error.message);
                 });
         } catch (error) {
-            toast.error(error.message);
+             toast.error(error.message);
             setLoading(false);
         }
     };
@@ -93,7 +93,7 @@ const Login = () => {
 
 <div className="login-form">
 <img src={logo} alt="Logo" className="login-logo" />
-<h1 className="login- text-white">Welcome Back</h1>
+<h1 className="login- text-white">Neorain Team</h1>
 <form onSubmit={handleSubmit}>
     <div className="form-group">
         <Input
