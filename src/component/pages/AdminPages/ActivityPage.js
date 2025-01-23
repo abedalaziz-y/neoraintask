@@ -21,12 +21,13 @@ const ActivityPage = () => {
   const { user } = useSelector((state) => state);
 
   useEffect(() => {
-    const socket = io('https://user-analytics-system-825467496328.us-central1.run.app'); 
+    const socket = io('http://localhost:5000'); 
 
     socket.on('newActivityrecord', (activity) => {
       setActivities((prevActivities) => {
         const updatedActivities = [...prevActivities, activity];
         setFilteredActivities(updatedActivities);
+        calculateMostActiveUser(updatedActivities);
         toast.success(`New activity recorded: ${activity.activity}`);
         return updatedActivities;
       });
@@ -66,6 +67,7 @@ const ActivityPage = () => {
 
           setActivities(formattedActivities);
           setFilteredActivities(formattedActivities);
+          calculateMostActiveUser(formattedActivities);
           setLoading(false);
         } else {
           setLoading(false);
@@ -79,35 +81,42 @@ const ActivityPage = () => {
     fetchActivities();
   }, [user.token]);
 
+  const calculateMostActiveUser = (activities) => {
+    const activityCount = activities.reduce((acc, activity) => {
+      acc[activity.email] = (acc[activity.email] || 0) + 1;
+      return acc;
+    }, {});
+
+    const mostActive = Object.entries(activityCount).reduce((max, [email, count]) => {
+      return count > max.count ? { email, count } : max;
+    }, { email: null, count: 0 });
+
+    setMostActiveUser(mostActive.email);
+  };
+
   const handleSearch = (e) => {
     setSearchText(e.target.value);
-    filterActivities(e.target.value, activityTypeFilter, emailFilter, dateFilter, mostActiveUser);
+    filterActivities(e.target.value, activityTypeFilter, emailFilter, dateFilter);
   };
 
   const handleActivityFilterChange = (value) => {
     setActivityTypeFilter(value);
-    filterActivities(searchText, value, emailFilter, dateFilter, mostActiveUser);
+    filterActivities(searchText, value, emailFilter, dateFilter);
   };
 
   const handleEmailFilterChange = (e) => {
     const value = e.target.value;
     setEmailFilter(value);
-    filterActivities(searchText, activityTypeFilter, value, dateFilter, mostActiveUser);
+    filterActivities(searchText, activityTypeFilter, value, dateFilter);
   };
 
   const handleDateFilterChange = (date, dateString) => {
     setDateFilter(dateString);
-    filterActivities(searchText, activityTypeFilter, emailFilter, dateString, mostActiveUser);
+    filterActivities(searchText, activityTypeFilter, emailFilter, dateString);
   };
 
   const handleMostActiveUserFilter = () => {
-    const activityCounts = activities.reduce((counts, activity) => {
-      counts[activity.email] = (counts[activity.email] || 0) + 1;
-      return counts;
-    }, {});
-    const mostActive = Object.entries(activityCounts).sort((a, b) => b[1] - a[1])[0]?.[0];
-    setMostActiveUser(mostActive);
-    filterActivities(searchText, activityTypeFilter, emailFilter, dateFilter, mostActive);
+    filterActivities(searchText, activityTypeFilter, mostActiveUser, dateFilter);
   };
 
   const handleResetFilters = () => {
@@ -115,125 +124,53 @@ const ActivityPage = () => {
     setEmailFilter('');
     setDateFilter(null);
     setSearchText('');
-    setMostActiveUser(null);
     setFilteredActivities(activities);
   };
 
-  const filterActivities = (search = '', activityType = null, email = '', date = null, mostActive = null) => {
+  const filterActivities = (search = '', activityType = null, email = '', date = null) => {
     let filtered = activities.filter((activity) => {
       return (
         activity.activity.toLowerCase().includes(search.toLowerCase()) &&
         (activityType ? activity.activity.includes(activityType) : true) &&
         (email ? activity.email.includes(email) : true) &&
-        (date ? moment(activity.timestamp).isSame(date, 'day') : true) &&
-        (mostActive ? activity.email === mostActive : true)
+        (date ? moment(activity.timestamp).isSame(date, 'day') : true)
       );
     });
     setFilteredActivities(filtered);
   };
 
-  const getColumnSearchProps = (dataIndex) => ({
-    filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
-      <div style={{ padding: 8 }}>
-        <Input
-          autoFocus
-          placeholder={`Search ${dataIndex}`}
-          value={selectedKeys[0]}
-          onChange={(e) => setSelectedKeys(e.target.value ? [e.target.value] : [])}
-          onPressEnter={() => confirm()}
-          style={{ marginBottom: 8, display: 'block' }}
-        />
-        <Space>
-          <Button
-            type="primary"
-            onClick={() => {
-              confirm();
-              handleSearch({ target: { value: selectedKeys[0] } });
-            }}
-            icon={<SearchOutlined />}
-            size="small"
-            style={{ width: 90 }}
-          >
-            Search
-          </Button>
-          <Button
-            onClick={() => {
-              clearFilters && clearFilters();
-              handleResetFilters();
-            }}
-            size="small"
-            style={{ width: 90 }}
-          >
-            Reset
-          </Button>
-        </Space>
-      </div>
-    ),
-    filterIcon: (filtered) => <SearchOutlined style={{ color: filtered ? '#1890ff' : undefined }} />,
-  });
-
-  const uniqueActivities = [...new Set(activities.map((item) => item.activity))]; // Get unique activities
+  const uniqueActivities = [...new Set(activities.map(item => item.activity))];
 
   const columns = [
     {
       title: 'Activity',
       dataIndex: 'activity',
       key: 'activity',
-      ...getColumnSearchProps('activity'),
-      filterDropdown: (
-        <div style={{ padding: 8 }}>
-          <Select
-            placeholder="Filter by Activity"
-            style={{ width: 200 }}
-            onChange={handleActivityFilterChange}
-            value={activityTypeFilter}
-          >
-            {uniqueActivities.map((activity, index) => (
-              <Option key={index} value={activity}>
-                {activity}
-              </Option>
-            ))}
-          </Select>
-        </div>
-      ),
     },
     {
       title: 'Email',
       dataIndex: 'email',
       key: 'email',
-      ...getColumnSearchProps('email'),
-      filterDropdown: (
-        <div style={{ padding: 8 }}>
-          <Input
-            placeholder="Filter by Email"
-            value={emailFilter}
-            onChange={handleEmailFilterChange}
-          />
-        </div>
-      ),
     },
     {
       title: 'Timestamp',
       dataIndex: 'timestamp',
       key: 'timestamp',
       render: (timestamp) => new Date(timestamp).toLocaleString(),
-      filterDropdown: (
-        <div style={{ padding: 8 }}>
-          <DatePicker onChange={handleDateFilterChange} />
-        </div>
-      ),
     },
   ];
 
   return (
     <div>
       <h1 className="text-center text-danger">User Activities</h1>
-      <Space style={{ marginBottom: 16 }}>
-        <Button onClick={handleMostActiveUserFilter} type="primary">
-          Most Active User
+      <div style={{ marginBottom: 16 }}>
+        <Button onClick={handleMostActiveUserFilter} disabled={!mostActiveUser}>
+          Filter Most Active User
         </Button>
-        <Button onClick={handleResetFilters}>Reset Filters</Button>
-      </Space>
+        <Button onClick={handleResetFilters} style={{ marginLeft: 8 }}>
+          Reset Filters
+        </Button>
+      </div>
       {loading ? (
         <Spin size="large" />
       ) : (
